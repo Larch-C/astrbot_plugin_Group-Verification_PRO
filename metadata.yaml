@@ -1,6 +1,6 @@
 name: astrbot_plugin_Group-Verification_PRO
 display_name: QQ群成员动态数学题验证
-author: huotuo146
+author: huntuo146
 version: 1.0.1
 description: |
   一个强大的QQ群成员入群验证插件。新成员需回答动态生成的100以内加减法问题方可入群。
