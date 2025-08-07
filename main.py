@@ -9,7 +9,7 @@ from astrbot.api.star import Context, Star, register
 
 
 @register(
-    "qq_member_verify",
+    "qq_member_verify_PRO",
     "huotuo146",
     "QQ群成员动态验证插件",
     "1.0.1",  # 初始版本
