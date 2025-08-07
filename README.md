@@ -8,18 +8,19 @@
 
 一个智能、高度可定制的QQ群验证工具，通过动态数学题有效拦截机器人，保护您的群聊安宁  
 
-[功能简介](#✨-功能简介) •  
-[安装方法](#📥-安装方法) •  
-[配置说明](#⚙️-配置说明) •  
-[使用教程](#📝-使用教程) •  
-[常见问题](#❓-常见问题) •  
-[更新日志](#📋-更新日志) •  
-[作者及许可](#👤-作者及许可)
+[功能简介](#features) •  
+[安装方法](#installation) •  
+[配置说明](#configuration) •  
+[使用教程](#usage) •  
+[常见问题](#faq) •  
+[更新日志](#changelog) •  
+[作者及许可](#author)
 
 </div>
 
 ---
 
+<a id="features"></a>
 ## ✨ 功能简介
 
 本插件为 AstrBot 提供了强大的新成员智能验证功能，能有效过滤广告机器人和可疑用户，全面提升群聊质量。
@@ -39,6 +40,7 @@
 
 ---
 
+<a id="installation"></a>
 ## 📥 安装方法
 
 <details>
@@ -54,6 +56,7 @@
 
 ---
 
+<a id="configuration"></a>
 ## ⚙️ 配置说明
 
 ### v1.0.1 配置项
@@ -80,6 +83,7 @@
 
 ---
 
+<a id="usage"></a>
 ## 📝 使用教程
 
 <table>
@@ -107,6 +111,7 @@
 
 ---
 
+<a id="faq"></a>
 ## ❓ 常见问题
 
 <details>
@@ -126,22 +131,31 @@
 
 ---
 
+<a id="changelog"></a>
 ## 📋 更新日志
 
 ### v1.0.1 (2025-08-07)
-- 🚀 **核心升级**：从静态关键词验证升级为 100 以内动态数学题验证  
-- 🔔 **高级控制**：新增超时前警告、错误重试、自定义踢出延迟等功能  
-- 🏗️ **代码重构**：优化验证逻辑与状态管理，提升可维护性与稳定性  
+
+- 🚀 **验证方式升级**：从静态关键词验证升级为 100 以内动态数学题验证  
+- 🔔 **高级控制能力**：新增验证超时前警告、错误重试、自定义踢出延迟等功能  
+- 🏗️ **代码重构**：优化验证逻辑与状态管理，提升稳定性与可维护性  
 
 ---
 
+<a id="author"></a>
 ## 👤 作者及许可
 
 - **作者**：huotuo146  
 - 🌐 GitHub：[huntuo146](https://github.com/huntuo146)  
 - 📧 Email：[2996603469@qq.com](mailto:2996603469@qq.com)  
-- 🔗 项目地址：`astrbot_plugin_Group-Verification_PRO`  
+- 🔗 项目地址：[astrbot_plugin_Group-Verification_PRO](https://github.com/huntuo146/astrbot_plugin_Group-Verification_PRO)  
 
-本项目采用 [MIT 许可证](LICENSE) 进行开源。  
+本项目采用 [MIT 许可证](LICENSE) 开源。  
 
+---
+
+<div align="center">
+<p>如果您觉得这个插件有用，请考虑给项目一个 ⭐Star！</p>
+<p>有问题或建议？欢迎 <a href="https://github.com/huntuo146/astrbot_plugin_Group-Verification_PRO/issues/new">提交 Issue</a></p>
+<sub>Made with ❤️ by huotuo146</sub>
 </div>
