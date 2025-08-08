@@ -121,7 +121,7 @@
 
 <details>
 <summary><b>机器人没有对新成员发起验证？</b></summary>
-<p>检查机器人是否为管理员，且 AstrBot 的事件通知权限正常，未被风控或屏蔽。</p>
+<p>检查机器人是否为管理员，且 AstrBot 的事件通知权限正常，未被QQ风控或屏蔽。</p>
 </details>
 
 <details>
