@@ -2,7 +2,7 @@
 
 <div align="center">
   
-![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)  
+![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)  
 ![License](https://img.shields.io/badge/license-MIT-green.svg)  
 ![Platform](https://img.shields.io/badge/platform-AstrBot-purple.svg)  
 
@@ -133,6 +133,16 @@
 
 <a id="changelog"></a>
 ## 📋 更新日志
+
+### v1.0.4 - 2025-08-08
+ * [关键修复] 解决了因 from astrbot.api.bot import Bot 语句在部分 AstrBot 框架版本中不兼容而导致的 ModuleNotFoundError 问题。
+ * [兼容性] 通过移除该导入和相关的类型提示，确保了插件在不同 AstrBot 版本中的加载成功率，提升了插件的普适性。
+### v1.0.3 - 2025-08-07
+ * [关键修复] 修复了 _timeout_kick 函数中存在一个不完整代码行而导致的 SyntaxError，该错误会使插件加载失败。
+### v1.0.2 - 2025-08-07
+ * [健壮性] 重构消息格式化逻辑：引入了安全的字符串格式化方法。现在，即使用户自定义的消息模板缺少某些占位符（如 {member_name}），插件也不会因 KeyError 而崩溃。
+ * [健壮性] 优化答案提取算法：不再简单地提取消息中出现的第一个数字。新逻辑会智能地提取用户回复中的最后一个数字作为答案，显著提高了在复杂回复（如 “答案是15”）中的识别准确率。
+ * [可维护性] 移除平台硬编码：重构了踢出流程，不再硬编码 aiocqhttp 平台。通过在任务创建时动态传递 bot 实例，为未来支持其他 OneBot 兼容的平台适配器打下基础。
 
 ### v1.0.1 (2025-08-07)
 
