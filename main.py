@@ -1,18 +1,36 @@
+# 完整修复后的 main.py 文件
+# 版本: 1.0.4 (修复了 ModuleNotFoundError)
+
 import asyncio
 import random
 import re
 from typing import Dict, Any, Tuple
+
+# 移除了有问题的导入: from astrbot.api.bot import Bot
 
 from astrbot.api import logger
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
 
 
+# 辅助函数：安全的字符串格式化
+def _safe_format(template: str, **kwargs: Any) -> str:
+    """
+    使用 .format_map() 安全地格式化字符串。
+    模板中不存在的键将被忽略，而不是引发 KeyError。
+    """
+    class SafeDict(dict):
+        def __missing__(self, key):
+            return f'{{{key}}}' # 如果键不存在，返回占位符本身
+
+    return template.format_map(SafeDict(kwargs))
+
+
 @register(
     "qq_member_verify_PRO",
-    "huotuo146",
+    "huntuo146",
     "QQ群成员动态验证插件",
-    "1.0.1",  # 初始版本
+    "1.0.4",  # 版本号递增，体现兼容性修复
     "https://github.com/huntuo146/astrbot_plugin_Group-Verification_PRO"
 )
 class QQGroupVerifyPlugin(Star):
@@ -72,9 +90,6 @@ class QQGroupVerifyPlugin(Star):
 
     @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def handle_event(self, event: AstrMessageEvent):
-        if event.get_platform_name() != "aiocqhttp":
-            return
-
         raw = event.message_obj.raw_message
         post_type = raw.get("post_type")
 
@@ -111,23 +126,23 @@ class QQGroupVerifyPlugin(Star):
         except Exception as e:
             logger.warning(f"[QQ Verify] 获取用户 {uid} 昵称失败: {e}")
 
-        task = asyncio.create_task(self._timeout_kick(uid, gid, nickname))
+        task = asyncio.create_task(self._timeout_kick(event.bot, uid, gid, nickname))
         self.pending[uid] = {"gid": gid, "answer": answer, "task": task}
 
         at_user = f"[CQ:at,qq={uid}]"
         
+        format_args = {
+            "at_user": at_user,
+            "member_name": nickname,
+            "question": question,
+            "timeout": self.verification_timeout // 60,
+            "countdown": self.kick_delay
+        }
+        
         if is_new_member:
-            prompt_message = self.new_member_prompt.format(
-                at_user=at_user,
-                member_name=nickname,
-                question=question,
-                timeout=self.verification_timeout // 60
-            )
-        else:  # 回答错误后重试
-            prompt_message = self.wrong_answer_prompt.format(
-                at_user=at_user,
-                question=question
-            )
+            prompt_message = _safe_format(self.new_member_prompt, **format_args)
+        else:
+            prompt_message = _safe_format(self.wrong_answer_prompt, **format_args)
 
         await event.bot.api.call_action("send_group_msg", group_id=gid, message=prompt_message)
 
@@ -137,39 +152,47 @@ class QQGroupVerifyPlugin(Star):
         if uid not in self.pending:
             return
         
-        text = event.message_str.strip()
         raw = event.message_obj.raw_message
         gid = self.pending[uid]["gid"]
 
         bot_id = str(event.get_self_id())
-        at_me = any(seg.get("type") == "at" and str(seg.get("data", {}).get("qq")) == bot_id for seg in raw.get("message", []))
+        message_segs = raw.get("message", [])
+        if not isinstance(message_segs, list):
+            return
+
+        at_me = any(seg.get("type") == "at" and str(seg.get("data", {}).get("qq")) == bot_id for seg in message_segs)
 
         if not at_me:
             return
         
+        text_without_at = re.sub(r'\[CQ:at,qq=\d+\]', '', event.message_str).strip()
+        numbers_found = re.findall(r'\d+', text_without_at)
+        
+        if not numbers_found:
+            return
+
         try:
-            # 从消息中提取第一个数字作为答案
-            match = re.search(r'(\d+)', text)
-            if not match:
-                return
-            user_answer = int(match.group(1))
+            user_answer = int(numbers_found[-1])
         except (ValueError, TypeError):
             return
 
         correct_answer = self.pending[uid].get("answer")
 
         if user_answer == correct_answer:
-            # --- 验证成功 ---
             logger.info(f"[QQ Verify] 用户 {uid} 在群 {gid} 验证成功。")
             self.pending[uid]["task"].cancel()
             self.pending.pop(uid, None)
 
             nickname = raw.get("sender", {}).get("card", "") or raw.get("sender", {}).get("nickname", uid)
-            welcome_msg = self.welcome_message.format(at_user=f"[CQ:at,qq={uid}]", member_name=nickname)
+            
+            welcome_msg = _safe_format(
+                self.welcome_message, 
+                at_user=f"[CQ:at,qq={uid}]", 
+                member_name=nickname
+            )
             await event.bot.api.call_action("send_group_msg", group_id=gid, message=welcome_msg)
             event.stop_event()
         else:
-            # --- 答案错误，重新开始 ---
             logger.info(f"[QQ Verify] 用户 {uid} 在群 {gid} 回答错误。重新生成问题。")
             await self._start_verification_process(event, uid, gid, is_new_member=False)
             event.stop_event()
@@ -182,41 +205,53 @@ class QQGroupVerifyPlugin(Star):
             self.pending.pop(uid, None)
             logger.info(f"[QQ Verify] 待验证用户 {uid} 已离开，清理其验证状态。")
 
-    async def _timeout_kick(self, uid: str, gid: int, nickname: str):
+    # 移除了对 Bot 的类型提示，以确保兼容性
+    async def _timeout_kick(self, bot, uid: str, gid: int, nickname: str):
         """处理超时、警告和踢出的协程"""
         try:
-            wait_before_warning = self.verification_timeout - self.kick_countdown_warning_time
-            if wait_before_warning > 0:
-                await asyncio.sleep(wait_before_warning)
-
-            if uid not in self.pending: return
-
-            bot = self.context.get_platform("aiocqhttp").get_client()
-            at_user = f"[CQ:at,qq={uid}]"
-            
-            # 发送超时警告
-            if self.kick_countdown_warning_time > 0:
-                warning_msg = self.countdown_warning_prompt.format(at_user=at_user, member_name=nickname)
+            wait_time = self.verification_timeout - self.kick_countdown_warning_time
+            if self.kick_countdown_warning_time > 0 and wait_time > 0:
+                await asyncio.sleep(wait_time)
+                if uid not in self.pending: return
+                
+                at_user = f"[CQ:at,qq={uid}]"
+                warning_msg = _safe_format(
+                    self.countdown_warning_prompt, 
+                    at_user=at_user, 
+                    member_name=nickname
+                )
                 try:
                     await bot.api.call_action("send_group_msg", group_id=gid, message=warning_msg)
                 except Exception as e:
                     logger.warning(f"[QQ Verify] 发送超时警告失败: {e}")
+                
                 await asyncio.sleep(self.kick_countdown_warning_time)
+            else:
+                await asyncio.sleep(self.verification_timeout)
 
             if uid not in self.pending: return
 
-            # --- 验证最终超时 ---
-            failure_msg = self.failure_message.format(at_user=at_user, member_name=nickname, countdown=self.kick_delay)
+            at_user = f"[CQ:at,qq={uid}]"
+            failure_msg = _safe_format(
+                self.failure_message, 
+                at_user=at_user, 
+                member_name=nickname, 
+                countdown=self.kick_delay
+            )
             await bot.api.call_action("send_group_msg", group_id=gid, message=failure_msg)
             
             await asyncio.sleep(self.kick_delay)
 
-            if uid not in self.pending: return # 最终检查
+            if uid not in self.pending: return
             
             await bot.api.call_action("set_group_kick", group_id=gid, user_id=int(uid), reject_add_request=False)
             logger.info(f"[QQ Verify] 用户 {uid} ({nickname}) 验证超时，已从群 {gid} 踢出。")
             
-            kick_msg = self.kick_message.format(at_user=at_user, member_name=nickname)
+            kick_msg = _safe_format(
+                self.kick_message, 
+                at_user=at_user, 
+                member_name=nickname
+            )
             await bot.api.call_action("send_group_msg", group_id=gid, message=kick_msg)
 
         except asyncio.CancelledError:
